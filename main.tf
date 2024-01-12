@@ -107,6 +107,24 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
+# Create Nat Gateway
+resource "aws_nat_gateway" "nat_gateway" {
+ connectivity_type="public"
+  allocation_id = aws_eip.nat_eip.id
+  subnet_id     = aws_subnet.web-subnet.id
+}
+
+resource "aws_eip" "nat_eip" {
+  instance = aws_instance.nat_instance.id
+}
+
+resource "aws_instance" "nat_instance" {
+  ami           = "ami-0d5eff06f840b45e9"  
+  instance_type = "t2.micro"               
+  subnet_id     = aws_subnet.web-subnet.id
+}
+
+
 # Create Web layber route table
 resource "aws_route_table" "web-rt" {
   vpc_id = aws_vpc.my-vpc.id
