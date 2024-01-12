@@ -137,7 +137,7 @@ resource "aws_route_table_association" "b" {
 # Create Nat Gateway
 resource "aws_nat_gateway" "nat" {
   connectivity_type = "public"
-  allocation_id = "eipalloc-05d954cb42d6e9421"
+  allocation_id = "eipalloc-0235bac42f4c14701"
   subnet_id     = aws_subnet.web-subnet-1.id
 
   tags = {
