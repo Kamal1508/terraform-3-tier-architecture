@@ -107,23 +107,6 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
-# Create Nat Gateway
-resource "aws_nat_gateway" "nat_gateway" {
- connectivity_type="public"
-  allocation_id = aws_eip.nat_eip.id
-  subnet_id     = aws_subnet.web-subnet.id
-}
-
-resource "aws_eip" "nat_eip" {
-  instance = aws_instance.nat_instance.id
-}
-
-resource "aws_instance" "nat_instance" {
-  ami           = "ami-0d5eff06f840b45e9"  
-  instance_type = "t2.micro"               
-  subnet_id     = aws_subnet.web-subnet.id
-}
-
 
 # Create Web layber route table
 resource "aws_route_table" "web-rt" {
@@ -149,6 +132,49 @@ resource "aws_route_table_association" "a" {
 resource "aws_route_table_association" "b" {
   subnet_id      = aws_subnet.web-subnet-2.id
   route_table_id = aws_route_table.web-rt.id
+}
+
+# Create Nat Gateway
+resource "aws_nat_gateway" "nat" {
+  connectivity_type = "public"
+  allocation_id = "eipalloc-05d954cb42d6e9421"
+  subnet_id     = aws_subnet.web-subnet-1.id
+
+  tags = {
+    Name = "SWIGGY-nat"
+  }
+
+  # To ensure proper ordering, it is recommended to add an explicit dependency
+  # on the Internet Gateway for the VPC.
+  depends_on = [aws_internet_gateway.igw]
+}
+
+
+# Create App layer route table
+resource "aws_route_table" "application-rt" {
+  vpc_id = aws_vpc.my-vpc.id
+
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_nat_gateway.nat.id
+  }
+
+  tags = {
+    Name = "NatRT"
+  }
+}
+
+
+# Create App Subnet association with App route table
+resource "aws_route_table_association" "c" {
+  subnet_id      = aws_subnet.application-subnet-1.id
+  route_table_id = aws_route_table.application-rt.id
+}
+
+resource "aws_route_table_association" "d" {
+  subnet_id      = aws_subnet.application-subnet-2.id
+  route_table_id = aws_route_table.application-rt.id
 }
 
 #Create EC2 Instance
